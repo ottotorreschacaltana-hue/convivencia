@@ -1,0 +1,1719 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Plataforma de Convivencia Escolar — I.E. San Luis Gonzaga de Ica">
+  <title>SLG · Servidor de Convivencia · Temporada 1</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,600;0,700;0,900;1,300&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════
+       TOKENS DE DISEÑO
+    ═══════════════════════════════════════════════════════════════════ */
+    :root {
+      --bg:            #080b11;
+      --bg-card:       rgba(17, 24, 39, 0.75);
+      --bg-card-deep:  rgba(10, 15, 28, 0.90);
+      --border:        #1e293b;
+      --border-dim:    rgba(30, 41, 59, 0.45);
+      --gold:          #dfb15b;
+      --gold-bright:   #f0c96a;
+      --gold-dim:      rgba(223, 177, 91, 0.10);
+      --gold-glow:     rgba(223, 177, 91, 0.22);
+      --red:           #b91c1c;
+      --red-bright:    #ef4444;
+      --red-dim:       rgba(185, 28, 28, 0.12);
+      --red-pulse:     rgba(185, 28, 28, 0.35);
+      --green:         #16a34a;
+      --text-1:        #f1f5f9;
+      --text-2:        #94a3b8;
+      --text-3:        #475569;
+      --radius:        8px;
+      --radius-sm:     4px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       RESET Y BASE
+    ═══════════════════════════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(ellipse 140% 60% at 50% -10%, rgba(223,177,91,0.045) 0%, transparent 55%),
+        radial-gradient(ellipse 60% 80% at 90% 50%, rgba(17,24,39,0.6) 0%, transparent 60%);
+      color: var(--text-1);
+      font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      line-height: 1.65;
+      text-align: left;
+      min-height: 100vh;
+    }
+
+    a { color: var(--gold); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       CONTENEDOR PRINCIPAL
+    ═══════════════════════════════════════════════════════════════════ */
+    .page-shell {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 22px 72px;
+      text-align: left;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       BANNER DE ÉXITO (fixed, slide-down)
+    ═══════════════════════════════════════════════════════════════════ */
+    .success-banner {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 9999;
+      background: linear-gradient(90deg, #14532d 0%, #166534 60%, #15803d 100%);
+      border-bottom: 1px solid rgba(74, 222, 128, 0.35);
+      padding: 11px 22px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      color: #dcfce7;
+      transform: translateY(-110%);
+      transition: transform 0.42s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .success-banner.visible { transform: translateY(0); }
+    .success-banner .sb-msg { flex: 1; }
+    .success-banner .sb-ticket {
+      background: rgba(0,0,0,0.3);
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: #86efac;
+      white-space: nowrap;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       MODAL OVERLAY + CAJA
+    ═══════════════════════════════════════════════════════════════════ */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 8000;
+      background: rgba(4, 6, 10, 0.88);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.28s ease;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal-box {
+      background: rgba(8, 12, 22, 0.98);
+      border: 1px solid var(--border);
+      border-top: 2px solid var(--red);
+      border-radius: 10px;
+      padding: 32px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.75), 0 0 0 1px rgba(185,28,28,0.08);
+      transform: scale(0.94) translateY(12px);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      text-align: left;
+    }
+    .modal-overlay.active .modal-box { transform: scale(1) translateY(0); }
+
+    .modal-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .modal-eyebrow {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      color: var(--red-bright);
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+    .modal-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-1);
+    }
+    .modal-close {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .modal-close:hover {
+      background: var(--red-dim);
+      border-color: var(--red);
+      color: var(--red-bright);
+    }
+
+    /* FORMULARIO */
+    .form-group { margin-bottom: 16px; text-align: left; }
+    .form-group label {
+      display: block;
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--text-2);
+      margin-bottom: 6px;
+      text-align: left;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 9px 11px;
+      color: var(--text-1);
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      text-align: left;
+      -webkit-appearance: none;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px var(--gold-dim);
+    }
+    .form-group select { cursor: pointer; }
+    .form-group select option { background: #0f172a; color: var(--text-1); }
+    .form-group textarea { resize: vertical; min-height: 88px; line-height: 1.5; }
+    .form-note {
+      font-size: 11px;
+      color: var(--text-3);
+      margin-top: 14px;
+      line-height: 1.5;
+    }
+    .btn-submit {
+      display: block;
+      width: 100%;
+      background: var(--red);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 13px 20px;
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin-top: 18px;
+      transition: background 0.2s, transform 0.1s;
+      text-align: center;
+    }
+    .btn-submit:hover { background: #dc2626; }
+    .btn-submit:active { transform: scale(0.99); }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       HEADER INSTITUCIONAL
+    ═══════════════════════════════════════════════════════════════════ */
+    .site-header {
+      border-bottom: 1px solid var(--border);
+      padding: 30px 0 24px;
+      margin-bottom: 44px;
+      position: relative;
+    }
+    .site-header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px; left: 0;
+      width: 56px; height: 2px;
+      background: var(--gold);
+    }
+    .header-eyebrow {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header-eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 18px; height: 1px;
+      background: var(--gold);
+      flex-shrink: 0;
+    }
+    .site-header h1 {
+      font-size: clamp(24px, 5.5vw, 38px);
+      font-weight: 900;
+      letter-spacing: -0.025em;
+      color: var(--text-1);
+      text-transform: uppercase;
+      line-height: 1.08;
+    }
+    .header-subtitle {
+      margin-top: 8px;
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--text-2);
+      letter-spacing: 0.04em;
+    }
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--gold-dim);
+      border: 1px solid rgba(223,177,91,0.22);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 9.5px;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-top: 14px;
+    }
+    .status-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--gold);
+      animation: blink-dot 2.4s infinite;
+    }
+    @keyframes blink-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       SECCIONES GENÉRICAS
+    ═══════════════════════════════════════════════════════════════════ */
+    .section { margin-bottom: 52px; }
+    .section-eyebrow {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 5px;
+    }
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-1);
+      margin-bottom: 3px;
+    }
+    .section-subtitle {
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--text-2);
+      margin-bottom: 18px;
+    }
+    .section-rule {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, var(--border), transparent 80%);
+      margin-bottom: 20px;
+      border: none;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       TARJETAS (glassmorphic)
+    ═══════════════════════════════════════════════════════════════════ */
+    .card {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-align: left;
+    }
+    .card-accent-top { border-top: 2px solid var(--gold); }
+    .card-emergency { border-color: rgba(185,28,28,0.4); border-top: 2px solid var(--red); background: rgba(12, 4, 4, 0.82); }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       SECCIÓN: BUZÓN DE ALERTA
+    ═══════════════════════════════════════════════════════════════════ */
+    .alert-header-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .alert-icon-box {
+      width: 40px; height: 40px;
+      background: var(--red-dim);
+      border: 1px solid rgba(185,28,28,0.28);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .alert-header-text strong {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-1);
+      display: block;
+    }
+    .alert-header-text span {
+      font-size: 11px;
+      color: var(--text-2);
+    }
+    .alert-body {
+      font-size: 13px;
+      color: var(--text-2);
+      margin-bottom: 20px;
+      line-height: 1.65;
+    }
+    .btn-report {
+      display: block;
+      width: 100%;
+      background: var(--red);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 15px 20px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      animation: report-pulse 3.2s ease-in-out infinite;
+      transition: background 0.2s;
+    }
+    .btn-report:hover { background: #dc2626; animation: none; }
+    @keyframes report-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 var(--red-pulse); }
+      50% { box-shadow: 0 0 0 10px rgba(185,28,28,0); }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       GRID DE DOS COLUMNAS (Quest + Patch)
+    ═══════════════════════════════════════════════════════════════════ */
+    .two-col-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (max-width: 580px) {
+      .two-col-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Quest list */
+    .col-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 18px;
+    }
+    .quest-list { list-style: none; }
+    .quest-item {
+      border-bottom: 1px solid var(--border-dim);
+      padding: 14px 0;
+    }
+    .quest-item:first-child { padding-top: 0; }
+    .quest-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .quest-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--gold-dim);
+      border: 1px solid rgba(223,177,91,0.18);
+      color: var(--gold);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 2px;
+      margin-bottom: 7px;
+    }
+    .quest-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-1);
+      margin-bottom: 5px;
+    }
+    .quest-desc {
+      font-size: 12px;
+      color: var(--text-2);
+      line-height: 1.55;
+    }
+    .quest-reward {
+      font-size: 11px;
+      color: var(--gold);
+      font-weight: 600;
+      margin-top: 6px;
+    }
+
+    /* Patch list */
+    .patch-list { list-style: none; }
+    .patch-item {
+      border-bottom: 1px solid var(--border-dim);
+      padding: 11px 0;
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+    .patch-item:first-child { padding-top: 0; }
+    .patch-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .patch-ver {
+      font-family: 'Courier New', monospace;
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--text-3);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      padding: 2px 4px;
+      border-radius: 2px;
+      text-align: center;
+      white-space: nowrap;
+      margin-top: 2px;
+    }
+    .patch-content { font-size: 12px; color: var(--text-2); line-height: 1.55; }
+    .patch-type {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      margin-right: 4px;
+    }
+    .t-buff { color: #4ade80; }
+    .t-adjust { color: #fbbf24; }
+    .t-fix { color: #60a5fa; }
+    .t-new { color: #e879f9; }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       CARRUSEL
+    ═══════════════════════════════════════════════════════════════════ */
+    .carousel {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      padding: 2px 0 14px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+    .carousel::-webkit-scrollbar { height: 3px; }
+    .carousel::-webkit-scrollbar-track { background: transparent; }
+    .carousel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .carousel-card {
+      scroll-snap-align: start;
+      flex-shrink: 0;
+      width: 230px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .carousel-img-wrap {
+      width: 100%;
+      height: 148px;
+      overflow: hidden;
+    }
+    .carousel-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.55s ease;
+    }
+    .carousel-card:hover .carousel-img { transform: scale(1.06); }
+    .carousel-cap {
+      padding: 12px 14px;
+    }
+    .carousel-cap-tag {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 5px;
+    }
+    .carousel-cap-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-1);
+      line-height: 1.4;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       TABS DE GRADO
+    ═══════════════════════════════════════════════════════════════════ */
+    .grade-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .grade-tabs::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 10px 18px;
+      color: var(--text-2);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      white-space: nowrap;
+      margin-bottom: -1px;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .tab-btn:hover { color: var(--text-1); }
+    .tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+    .grade-panel { display: none; }
+    .grade-panel.active { display: block; }
+
+    .lb-placeholder {
+      padding: 36px 0;
+      text-align: center;
+      color: var(--text-3);
+      font-size: 13px;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       TABLA LEADERBOARD
+    ═══════════════════════════════════════════════════════════════════ */
+    .lb-grade-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 18px;
+    }
+    .lb-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .lb-table thead tr { border-bottom: 1px solid var(--border); }
+    .lb-table thead th {
+      padding: 7px 10px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+    .lb-table thead th:first-child  { text-align: left; }
+    .lb-table thead th:nth-child(2) { text-align: center; }
+    .lb-table thead th:last-child   { text-align: right; }
+
+    .lb-table tbody tr {
+      border-bottom: 1px solid rgba(30, 41, 59, 0.35);
+      transition: background 0.14s;
+    }
+    .lb-table tbody tr:hover { background: rgba(223,177,91,0.04); }
+    .lb-table tbody tr:last-child { border-bottom: none; }
+
+    .lb-table td { padding: 11px 10px 5px; vertical-align: top; }
+    .lb-table td:first-child  { text-align: left; }
+    .lb-table td:nth-child(2) { text-align: center; vertical-align: middle; padding-top: 13px; }
+    .lb-table td:last-child   { text-align: right; padding-bottom: 9px; }
+
+    .lb-crown { margin-right: 4px; font-size: 13px; }
+    .lb-sec   { font-weight: 700; font-size: 13px; color: var(--text-1); }
+
+    .lb-badge {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 2px;
+    }
+    .lb-badge.champion  { color: var(--gold); background: var(--gold-dim); border: 1px solid rgba(223,177,91,0.2); }
+    .lb-badge.elite     { color: #93c5fd; background: rgba(147,197,253,0.08); border: 1px solid rgba(147,197,253,0.2); }
+    .lb-badge.guardian  { color: #c084fc; background: rgba(192,132,252,0.08); border: 1px solid rgba(192,132,252,0.2); }
+    .lb-badge.ambassador{ color: #4ade80; background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.2); }
+    .lb-badge.explorer  { color: #67e8f9; background: rgba(103,232,249,0.07); border: 1px solid rgba(103,232,249,0.18); }
+    .lb-badge.agent     { color: var(--text-2); background: rgba(148,163,184,0.06); border: 1px solid rgba(148,163,184,0.14); }
+    .lb-badge.initiate  { color: var(--text-3); background: transparent; border: 1px solid var(--border); }
+
+    .lb-xp {
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gold);
+      white-space: nowrap;
+    }
+    .lb-xp-unit {
+      font-size: 9px;
+      font-weight: 400;
+      color: var(--text-3);
+      margin-left: 2px;
+    }
+    .lb-bar {
+      height: 2px;
+      background: rgba(223,177,91,0.1);
+      border-radius: 1px;
+      margin-top: 5px;
+      overflow: hidden;
+    }
+    .lb-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold), var(--gold-bright));
+      border-radius: 1px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       EMERGENCIAS
+    ═══════════════════════════════════════════════════════════════════ */
+    .emergency-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .emergency-icon-box {
+      width: 36px; height: 36px;
+      background: var(--red-dim);
+      border: 1px solid rgba(185,28,28,0.3);
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0;
+    }
+    .emergency-intro {
+      font-size: 12px;
+      color: var(--text-2);
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+    .emergency-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 480px) {
+      .emergency-grid { grid-template-columns: 1fr; }
+    }
+    .emergency-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.018);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      color: var(--text-1);
+      font-size: 13px;
+      text-decoration: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .emergency-link:hover {
+      border-color: rgba(185,28,28,0.5);
+      background: var(--red-dim);
+      text-decoration: none;
+    }
+    .em-icon { font-size: 20px; flex-shrink: 0; }
+    .em-number { font-family: 'Courier New', monospace; font-size: 16px; font-weight: 700; display: block; }
+    .em-label  { font-size: 10px; color: var(--text-2); display: block; margin-top: 1px; }
+
+    .toe-block {
+      margin-top: 14px;
+      background: rgba(255,255,255,0.018);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+    }
+    .toe-title { font-size: 11px; font-weight: 700; color: var(--text-1); margin-bottom: 4px; }
+    .toe-desc  { font-size: 12px; color: var(--text-2); line-height: 1.55; }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       FOOTER
+    ═══════════════════════════════════════════════════════════════════ */
+    .site-footer {
+      border-top: 1px solid var(--border);
+      margin-top: 52px;
+      padding-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .footer-left { font-size: 11px; color: var(--text-3); }
+    .footer-right { font-size: 11px; color: var(--text-3); }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       RESPONSIVE MÓVIL
+    ═══════════════════════════════════════════════════════════════════ */
+    @media (max-width: 480px) {
+      .page-shell { padding: 0 14px 52px; }
+      .card { padding: 18px; }
+      .modal-box { padding: 22px 18px; }
+      .site-header { padding: 22px 0 18px; margin-bottom: 32px; }
+      .section { margin-bottom: 40px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     BANNER ÉXITO
+════════════════════════════════════════════════════════════════════ -->
+<div class="success-banner" id="successBanner" role="alert" aria-live="polite">
+  <span class="sb-msg">📡 ¡DATA ENCRIPTADA! Tu reporte ha sido enviado de forma segura y anónima.</span>
+  <span class="sb-ticket" id="ticketCode">#GS-0000</span>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     MODAL REPORTE
+════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="reportModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <div class="modal-eyebrow">🔒 Canal Seguro · Misión Incógnito</div>
+        <div class="modal-title" id="modalTitle">Reporte de Alerta Escolar</div>
+      </div>
+      <button class="modal-close" id="modalCloseBtn" aria-label="Cerrar modal">&#x2715;</button>
+    </div>
+
+    <div class="form-group">
+      <label for="incidentType">Tipo de incidente</label>
+      <select id="incidentType">
+        <option value="">— Selecciona una categoría —</option>
+        <option value="bullying_fisico">Bullying físico (golpes, empujones)</option>
+        <option value="bullying_verbal">Bullying verbal (insultos, apodos)</option>
+        <option value="cyberbullying">Cyberbullying (redes sociales)</option>
+        <option value="exclusion">Exclusión y aislamiento</option>
+        <option value="amenazas">Amenazas o extorsión</option>
+        <option value="robo">Robo o daño de pertenencias</option>
+        <option value="otro">Otro tipo de violencia</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="incidentGrade">Grado y sección afectada</label>
+      <select id="incidentGrade">
+        <option value="">— Selecciona el grado y sección —</option>
+        <option>1° A</option><option>1° B</option><option>1° C</option><option>1° D</option>
+        <option>1° E</option><option>1° F</option><option>1° G</option><option>1° H</option>
+        <option>1° I</option><option>1° J</option><option>1° K</option><option>1° L</option>
+        <option>1° M</option><option>1° N</option><option>1° O</option>
+        <option>2° A</option><option>2° B</option><option>2° C</option><option>2° D</option>
+        <option>2° E</option><option>2° F</option><option>2° G</option><option>2° H</option>
+        <option>2° I</option><option>2° J</option><option>2° K</option><option>2° L</option>
+        <option>2° M</option><option>2° N</option><option>2° O</option>
+        <option>3° A</option><option>3° B</option><option>3° C</option><option>3° D</option>
+        <option>3° E</option><option>3° F</option><option>3° G</option><option>3° H</option>
+        <option>3° I</option><option>3° J</option><option>3° K</option><option>3° L</option>
+        <option>3° M</option><option>3° N</option><option>3° O</option>
+        <option>4° A</option><option>4° B</option><option>4° C</option><option>4° D</option>
+        <option>4° E</option><option>4° F</option><option>4° G</option><option>4° H</option>
+        <option>4° I</option><option>4° J</option><option>4° K</option><option>4° L</option>
+        <option>4° M</option><option>4° N</option><option>4° O</option>
+        <option>5° A</option><option>5° B</option><option>5° C</option><option>5° D</option>
+        <option>5° E</option><option>5° F</option><option>5° G</option><option>5° H</option>
+        <option>5° I</option><option>5° J</option><option>5° K</option><option>5° L</option>
+        <option>5° M</option><option>5° N</option><option>5° O</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="incidentDesc">Describe lo que ocurrió</label>
+      <textarea id="incidentDesc" placeholder="Describe el incidente con el mayor detalle posible. No es necesario que reveles tu nombre ni identidad."></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="incidentLocation">Lugar del incidente (opcional)</label>
+      <input type="text" id="incidentLocation" placeholder="Ej: Patio central, aula 2B, baños del 3.er piso...">
+    </div>
+
+    <p class="form-note">🔐 Este reporte es completamente anónimo. Será procesado por el equipo de Tutoría (TOE) en un plazo máximo de 24 horas.</p>
+    <button class="btn-submit" id="submitReportBtn">📤 &nbsp;Enviar Reporte Seguro</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     CUERPO PRINCIPAL
+════════════════════════════════════════════════════════════════════ -->
+<div class="page-shell">
+
+  <!-- ── HEADER INSTITUCIONAL ── -->
+  <header class="site-header">
+    <div class="header-eyebrow">I.E. Pública · Ica, Perú</div>
+    <h1>San Luis Gonzaga</h1>
+    <p class="header-subtitle">Plataforma de Convivencia Escolar · Nivel Secundaria · Ica</p>
+    <div class="header-badge">
+      <span class="status-dot"></span>
+      Temporada 1 &nbsp;—&nbsp; Servidor de Convivencia
+    </div>
+  </header>
+
+  <!-- ── SECCIÓN 1: MISIÓN DE INCÓGNITO / BUZÓN DE ALERTA ── -->
+  <section class="section" id="buzon-alerta">
+    <div class="section-eyebrow">Misión de Incógnito</div>
+    <div class="section-title">Buzón de Alerta Anónima</div>
+    <div class="section-subtitle">Canal encriptado de reportes · Operativo las 24 horas</div>
+    <hr class="section-rule">
+
+    <div class="card card-accent-top">
+      <div class="alert-header-row">
+        <div class="alert-icon-box">🛡️</div>
+        <div class="alert-header-text">
+          <strong>Protocolo de Protección Activo</strong>
+          <span>Tu identidad permanece encriptada en todo momento</span>
+        </div>
+      </div>
+      <p class="alert-body">
+        ¿Eres testigo o víctima de violencia escolar? Activa el protocolo de alerta. Tu reporte viaja encriptado, es 100% anónimo y será atendido por el equipo de Tutoría (TOE) en las próximas 24 horas. No necesitas revelar tu nombre, tu sección ni ningún dato personal.
+      </p>
+      <button class="btn-report" id="openModalBtn" type="button">
+        🚨 &nbsp; ACTIVAR MISIÓN DE INCÓGNITO — REPORTAR AHORA
+      </button>
+    </div>
+  </section>
+
+  <!-- ── SECCIÓN 2: QUEST LOG + PATCH NOTES ── -->
+  <section class="section" id="quest-log">
+    <div class="section-eyebrow">Board Semanal</div>
+    <div class="section-title">Quest Log &amp; Notas de Parche</div>
+    <div class="section-subtitle">Semana 24 · Temporada 1 · Actualización v1.4.2</div>
+    <hr class="section-rule">
+
+    <div class="two-col-grid">
+
+      <!-- Columna izquierda: Misiones -->
+      <div class="card">
+        <div class="col-label">⚔️ Objetivos de Convivencia</div>
+        <ul class="quest-list">
+          <li class="quest-item">
+            <div class="quest-tag">🛡️ Quest Principal</div>
+            <div class="quest-name">Escudo de Compañerismo</div>
+            <div class="quest-desc">Integra activamente a un alumno nuevo o que esté siendo excluido durante los recreos de esta semana.</div>
+            <div class="quest-reward">+120 XP para tu sección</div>
+          </li>
+          <li class="quest-item">
+            <div class="quest-tag">👁️ Quest Secundaria</div>
+            <div class="quest-name">Operación Testigo Activo</div>
+            <div class="quest-desc">Si presencias una agresión, repórtala a través del Buzón de Alerta o directamente a tu tutor/a antes del viernes.</div>
+            <div class="quest-reward">+80 XP para tu sección</div>
+          </li>
+          <li class="quest-item">
+            <div class="quest-tag">🌐 Quest Comunidad</div>
+            <div class="quest-name">Embajador Digital</div>
+            <div class="quest-desc">Comparte un mensaje positivo sobre convivencia en el grupo de tu sección con el hashtag #SLGConvivencia.</div>
+            <div class="quest-reward">+60 XP para tu sección</div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Columna derecha: Patch Notes -->
+      <div class="card">
+        <div class="col-label">📋 Registro de Cambios v1.4.2</div>
+        <ul class="patch-list">
+          <li class="patch-item">
+            <span class="patch-ver">v1.4.2</span>
+            <div class="patch-content"><span class="patch-type t-buff">BUFF</span> Secciones con las 3 quests completadas reciben multiplicador ×1.5 en los puntos del viernes.</div>
+          </li>
+          <li class="patch-item">
+            <span class="patch-ver">v1.4.1</span>
+            <div class="patch-content"><span class="patch-type t-adjust">AJUSTE</span> Penalización por tardanzas colectivas reducida de 72 h a 48 h de congelamiento de XP.</div>
+          </li>
+          <li class="patch-item">
+            <span class="patch-ver">v1.4.0</span>
+            <div class="patch-content"><span class="patch-type t-new">NUEVO</span> Quest "Embajador Digital" añadida con recompensa de +60 XP por participación verificada.</div>
+          </li>
+          <li class="patch-item">
+            <span class="patch-ver">v1.3.8</span>
+            <div class="patch-content"><span class="patch-type t-fix">CORRECCIÓN</span> Recálculo de puntos de la semana 22 tras verificar 11 reportes de convivencia pendientes.</div>
+          </li>
+          <li class="patch-item">
+            <span class="patch-ver">v1.3.5</span>
+            <div class="patch-content"><span class="patch-type t-new">NUEVO</span> Insignia "Guardián de la Semana" ahora disponible para el tutor/a de la sección #1 mensual.</div>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── SECCIÓN 3: CARRUSEL / PERIÓDICO MURAL DIGITAL ── -->
+  <section class="section" id="mural-digital">
+    <div class="section-eyebrow">Periódico Mural Digital</div>
+    <div class="section-title">Afiches Preventivos</div>
+    <div class="section-subtitle">Desplázate horizontalmente para ver todos los afiches · Temporada 1</div>
+    <hr class="section-rule">
+
+    <div class="carousel">
+      <div class="carousel-card">
+        <div class="carousel-img-wrap">
+          <img class="carousel-img" src="https://picsum.photos/seed/slg-antibully1/460/296" alt="No al bullying" loading="lazy">
+        </div>
+        <div class="carousel-cap">
+          <div class="carousel-cap-tag">📢 Campaña Anti-Bullying</div>
+          <div class="carousel-cap-title">El silencio no protege. Hablar sí lo hace.</div>
+        </div>
+      </div>
+      <div class="carousel-card">
+        <div class="carousel-img-wrap">
+          <img class="carousel-img" src="https://picsum.photos/seed/slg-respect2/460/296" alt="Respeto y convivencia" loading="lazy">
+        </div>
+        <div class="carousel-cap">
+          <div class="carousel-cap-tag">🤝 Convivencia Pacífica</div>
+          <div class="carousel-cap-title">El respeto es el primer acuerdo de nuestra comunidad.</div>
+        </div>
+      </div>
+      <div class="carousel-card">
+        <div class="carousel-img-wrap">
+          <img class="carousel-img" src="https://picsum.photos/seed/slg-cyber3/460/296" alt="Prevención cyberbullying" loading="lazy">
+        </div>
+        <div class="carousel-cap">
+          <div class="carousel-cap-tag">💻 Prevención Digital</div>
+          <div class="carousel-cap-title">El cyberbullying también duele. Denuncia sin miedo.</div>
+        </div>
+      </div>
+      <div class="carousel-card">
+        <div class="carousel-img-wrap">
+          <img class="carousel-img" src="https://picsum.photos/seed/slg-unity4/460/296" alt="Unidad escolar" loading="lazy">
+        </div>
+        <div class="carousel-cap">
+          <div class="carousel-cap-tag">🛡️ Defensa Colectiva</div>
+          <div class="carousel-cap-title">Juntos somos más fuertes. Nadie se queda solo.</div>
+        </div>
+      </div>
+      <div class="carousel-card">
+        <div class="carousel-img-wrap">
+          <img class="carousel-img" src="https://picsum.photos/seed/slg-empathy5/460/296" alt="Empatía escolar" loading="lazy">
+        </div>
+        <div class="carousel-cap">
+          <div class="carousel-cap-tag">❤️ Empatía en Acción</div>
+          <div class="carousel-cap-title">Ponerse en los zapatos del otro lo cambia todo.</div>
+        </div>
+      </div>
+      <div class="carousel-card">
+        <div class="carousel-img-wrap">
+          <img class="carousel-img" src="https://picsum.photos/seed/slg-report6/460/296" alt="Reportar es valiente" loading="lazy">
+        </div>
+        <div class="carousel-cap">
+          <div class="carousel-cap-tag">📡 Reportar es Valiente</div>
+          <div class="carousel-cap-title">Usar el buzón anónimo no es acusar. Es proteger.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SECCIÓN 4 + 5: CONTROLLER DE GRADOS + LEADERBOARD ── -->
+  <section class="section" id="leaderboard">
+    <div class="section-eyebrow">Tabla de Honor</div>
+    <div class="section-title">Leaderboard de Convivencia</div>
+    <div class="section-subtitle">Selecciona un grado para ver el ranking de sus secciones</div>
+    <hr class="section-rule">
+
+    <!-- TABS DE GRADO -->
+    <nav class="grade-tabs" role="tablist" aria-label="Seleccionar grado">
+      <button class="tab-btn" role="tab" aria-selected="false" data-grade="1" onclick="switchGrade(1)">1° Grado</button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-grade="2" onclick="switchGrade(2)">2° Grado</button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-grade="3" onclick="switchGrade(3)">3° Grado</button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-grade="4" onclick="switchGrade(4)">4° Grado</button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-grade="5" onclick="switchGrade(5)">5° Grado</button>
+    </nav>
+
+    <!-- Placeholder inicial -->
+    <div class="lb-placeholder" id="lb-placeholder">↑ Selecciona un grado para visualizar su ranking completo</div>
+
+    <!-- ════ PRIMER GRADO ════ -->
+    <div class="grade-panel card" id="grade-panel-1" role="tabpanel">
+      <div class="lb-grade-label">⚔️ Primer Grado · Secciones A — O · 15 Secciones</div>
+      <table class="lb-table">
+        <thead>
+          <tr>
+            <th>Sección</th>
+            <th>Rango Institucional</th>
+            <th>Puntos XP</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="lb-crown">🥇</span><span class="lb-sec">1° A</span></td>
+            <td><span class="lb-badge champion">Campeón de Honor</span></td>
+            <td><span class="lb-xp">4,920<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:98.4%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-crown">🥈</span><span class="lb-sec">1° B</span></td>
+            <td><span class="lb-badge champion">Campeón de Honor</span></td>
+            <td><span class="lb-xp">4,780<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:95.6%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-crown">🥉</span><span class="lb-sec">1° C</span></td>
+            <td><span class="lb-badge elite">Defensor Élite</span></td>
+            <td><span class="lb-xp">4,640<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:92.8%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">1° D</span></td>
+            <td><span class="lb-badge elite">Defensor Élite</span></td>
+            <td><span class="lb-xp">4,450<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:89.0%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">1° E</span></td>
+            <td><span class="lb-badge elite">Defensor Élite</span></td>
+            <td><span class="lb-xp">4,310<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:86.2%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">1° F</span></td>
+            <td><span class="lb-badge guardian">Guardián Emérito</span></td>
+            <td><span class="lb-xp">4,170<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:83.4%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">1° G</span></td>
+            <td><span class="lb-badge guardian">Guardián Emérito</span></td>
+            <td><span class="lb-xp">4,020<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:80.4%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">1° H</span></td>
+            <td><span class="lb-badge ambassador">Embajador Activo</span></td>
+            <td><span class="lb-xp">3,880<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:77.6%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">1° I</span></td>
+            <td><span class="lb-badge ambassador">Embajador Activo</span></td>
+            <td><span class="lb-xp">3,730<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:74.6%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">1° J</span></td>
+            <td><span class="lb-badge ambassador">Embajador Activo</span></td>
+            <td><span class="lb-xp">3,590<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:71.8%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">1° K</span></td>
+            <td><span class="lb-badge explorer">Explorador</span></td>
+            <td><span class="lb-xp">3,420<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:68.4%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">1° L</span></td>
+            <td><span class="lb-badge explorer">Explorador</span></td>
+            <td><span class="lb-xp">3,250<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:65.0%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">1° M</span></td>
+            <td><span class="lb-badge agent">Agente</span></td>
+            <td><span class="lb-xp">3,080<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:61.6%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">1° N</span></td>
+            <td><span class="lb-badge agent">Agente</span></td>
+            <td><span class="lb-xp">2,890<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:57.8%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">1° O</span></td>
+            <td><span class="lb-badge agent">Agente</span></td>
+            <td><span class="lb-xp">2,710<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:54.2%"></div></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ════ SEGUNDO GRADO ════ -->
+    <div class="grade-panel card" id="grade-panel-2" role="tabpanel">
+      <div class="lb-grade-label">⚔️ Segundo Grado · Secciones A — O · 15 Secciones</div>
+      <table class="lb-table">
+        <thead>
+          <tr>
+            <th>Sección</th>
+            <th>Rango Institucional</th>
+            <th>Puntos XP</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="lb-crown">🥇</span><span class="lb-sec">2° A</span></td>
+            <td><span class="lb-badge champion">Campeón de Honor</span></td>
+            <td><span class="lb-xp">4,870<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:97.4%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-crown">🥈</span><span class="lb-sec">2° B</span></td>
+            <td><span class="lb-badge champion">Campeón de Honor</span></td>
+            <td><span class="lb-xp">4,730<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:94.6%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-crown">🥉</span><span class="lb-sec">2° C</span></td>
+            <td><span class="lb-badge elite">Defensor Élite</span></td>
+            <td><span class="lb-xp">4,560<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:91.2%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">2° D</span></td>
+            <td><span class="lb-badge elite">Defensor Élite</span></td>
+            <td><span class="lb-xp">4,390<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:87.8%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">2° E</span></td>
+            <td><span class="lb-badge guardian">Guardián Emérito</span></td>
+            <td><span class="lb-xp">4,210<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:84.2%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">2° F</span></td>
+            <td><span class="lb-badge guardian">Guardián Emérito</span></td>
+            <td><span class="lb-xp">4,050<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:81.0%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">2° G</span></td>
+            <td><span class="lb-badge ambassador">Embajador Activo</span></td>
+            <td><span class="lb-xp">3,880<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:77.6%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">2° H</span></td>
+            <td><span class="lb-badge ambassador">Embajador Activo</span></td>
+            <td><span class="lb-xp">3,720<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:74.4%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">2° I</span></td>
+            <td><span class="lb-badge ambassador">Embajador Activo</span></td>
+            <td><span class="lb-xp">3,560<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:71.2%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">2° J</span></td>
+            <td><span class="lb-badge explorer">Explorador</span></td>
+            <td><span class="lb-xp">3,400<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:68.0%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">2° K</span></td>
+            <td><span class="lb-badge explorer">Explorador</span></td>
+            <td><span class="lb-xp">3,230<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:64.6%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">2° L</span></td>
+            <td><span class="lb-badge agent">Agente</span></td>
+            <td><span class="lb-xp">3,060<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:61.2%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">2° M</span></td>
+            <td><span class="lb-badge agent">Agente</span></td>
+            <td><span class="lb-xp">2,880<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:57.6%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">2° N</span></td>
+            <td><span class="lb-badge agent">Agente</span></td>
+            <td><span class="lb-xp">2,710<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:54.2%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">2° O</span></td>
+            <td><span class="lb-badge initiate">Iniciado</span></td>
+            <td><span class="lb-xp">2,540<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:50.8%"></div></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ════ TERCER GRADO ════ -->
+    <div class="grade-panel card" id="grade-panel-3" role="tabpanel">
+      <div class="lb-grade-label">⚔️ Tercer Grado · Secciones A — O · 15 Secciones</div>
+      <table class="lb-table">
+        <thead>
+          <tr>
+            <th>Sección</th>
+            <th>Rango Institucional</th>
+            <th>Puntos XP</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="lb-crown">🥇</span><span class="lb-sec">3° A</span></td>
+            <td><span class="lb-badge champion">Campeón de Honor</span></td>
+            <td><span class="lb-xp">4,960<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:99.2%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-crown">🥈</span><span class="lb-sec">3° B</span></td>
+            <td><span class="lb-badge champion">Campeón de Honor</span></td>
+            <td><span class="lb-xp">4,810<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:96.2%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-crown">🥉</span><span class="lb-sec">3° C</span></td>
+            <td><span class="lb-badge elite">Defensor Élite</span></td>
+            <td><span class="lb-xp">4,650<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:93.0%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">3° D</span></td>
+            <td><span class="lb-badge elite">Defensor Élite</span></td>
+            <td><span class="lb-xp">4,490<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:89.8%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">3° E</span></td>
+            <td><span class="lb-badge elite">Defensor Élite</span></td>
+            <td><span class="lb-xp">4,320<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:86.4%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">3° F</span></td>
+            <td><span class="lb-badge guardian">Guardián Emérito</span></td>
+            <td><span class="lb-xp">4,150<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:83.0%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">3° G</span></td>
+            <td><span class="lb-badge guardian">Guardián Emérito</span></td>
+            <td><span class="lb-xp">3,970<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:79.4%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">3° H</span></td>
+            <td><span class="lb-badge ambassador">Embajador Activo</span></td>
+            <td><span class="lb-xp">3,800<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:76.0%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">3° I</span></td>
+            <td><span class="lb-badge ambassador">Embajador Activo</span></td>
+            <td><span class="lb-xp">3,640<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:72.8%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">3° J</span></td>
+            <td><span class="lb-badge explorer">Explorador</span></td>
+            <td><span class="lb-xp">3,470<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:69.4%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">3° K</span></td>
+            <td><span class="lb-badge explorer">Explorador</span></td>
+            <td><span class="lb-xp">3,300<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:66.0%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">3° L</span></td>
+            <td><span class="lb-badge explorer">Explorador</span></td>
+            <td><span class="lb-xp">3,130<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:62.6%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">3° M</span></td>
+            <td><span class="lb-badge agent">Agente</span></td>
+            <td><span class="lb-xp">2,960<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:59.2%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">3° N</span></td>
+            <td><span class="lb-badge agent">Agente</span></td>
+            <td><span class="lb-xp">2,790<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:55.8%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">3° O</span></td>
+            <td><span class="lb-badge initiate">Iniciado</span></td>
+            <td><span class="lb-xp">2,620<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:52.4%"></div></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ════ CUARTO GRADO ════ -->
+    <div class="grade-panel card" id="grade-panel-4" role="tabpanel">
+      <div class="lb-grade-label">⚔️ Cuarto Grado · Secciones A — O · 15 Secciones</div>
+      <table class="lb-table">
+        <thead>
+          <tr>
+            <th>Sección</th>
+            <th>Rango Institucional</th>
+            <th>Puntos XP</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="lb-crown">🥇</span><span class="lb-sec">4° A</span></td>
+            <td><span class="lb-badge champion">Campeón de Honor</span></td>
+            <td><span class="lb-xp">4,840<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:96.8%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-crown">🥈</span><span class="lb-sec">4° B</span></td>
+            <td><span class="lb-badge elite">Defensor Élite</span></td>
+            <td><span class="lb-xp">4,680<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:93.6%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-crown">🥉</span><span class="lb-sec">4° C</span></td>
+            <td><span class="lb-badge elite">Defensor Élite</span></td>
+            <td><span class="lb-xp">4,520<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:90.4%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">4° D</span></td>
+            <td><span class="lb-badge elite">Defensor Élite</span></td>
+            <td><span class="lb-xp">4,360<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:87.2%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">4° E</span></td>
+            <td><span class="lb-badge guardian">Guardián Emérito</span></td>
+            <td><span class="lb-xp">4,190<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:83.8%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">4° F</span></td>
+            <td><span class="lb-badge guardian">Guardián Emérito</span></td>
+            <td><span class="lb-xp">4,020<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:80.4%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">4° G</span></td>
+            <td><span class="lb-badge ambassador">Embajador Activo</span></td>
+            <td><span class="lb-xp">3,840<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:76.8%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">4° H</span></td>
+            <td><span class="lb-badge ambassador">Embajador Activo</span></td>
+            <td><span class="lb-xp">3,670<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:73.4%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">4° I</span></td>
+            <td><span class="lb-badge ambassador">Embajador Activo</span></td>
+            <td><span class="lb-xp">3,500<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:70.0%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">4° J</span></td>
+            <td><span class="lb-badge explorer">Explorador</span></td>
+            <td><span class="lb-xp">3,330<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:66.6%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">4° K</span></td>
+            <td><span class="lb-badge explorer">Explorador</span></td>
+            <td><span class="lb-xp">3,160<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:63.2%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">4° L</span></td>
+            <td><span class="lb-badge agent">Agente</span></td>
+            <td><span class="lb-xp">2,990<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:59.8%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">4° M</span></td>
+            <td><span class="lb-badge agent">Agente</span></td>
+            <td><span class="lb-xp">2,820<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:56.4%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">4° N</span></td>
+            <td><span class="lb-badge initiate">Iniciado</span></td>
+            <td><span class="lb-xp">2,650<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:53.0%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">4° O</span></td>
+            <td><span class="lb-badge initiate">Iniciado</span></td>
+            <td><span class="lb-xp">2,480<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:49.6%"></div></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ════ QUINTO GRADO ════ -->
+    <div class="grade-panel card" id="grade-panel-5" role="tabpanel">
+      <div class="lb-grade-label">⚔️ Quinto Grado · Secciones A — O · 15 Secciones</div>
+      <table class="lb-table">
+        <thead>
+          <tr>
+            <th>Sección</th>
+            <th>Rango Institucional</th>
+            <th>Puntos XP</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="lb-crown">🥇</span><span class="lb-sec">5° A</span></td>
+            <td><span class="lb-badge champion">Campeón de Honor</span></td>
+            <td><span class="lb-xp">4,990<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:99.8%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-crown">🥈</span><span class="lb-sec">5° B</span></td>
+            <td><span class="lb-badge champion">Campeón de Honor</span></td>
+            <td><span class="lb-xp">4,840<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:96.8%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-crown">🥉</span><span class="lb-sec">5° C</span></td>
+            <td><span class="lb-badge elite">Defensor Élite</span></td>
+            <td><span class="lb-xp">4,680<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:93.6%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">5° D</span></td>
+            <td><span class="lb-badge elite">Defensor Élite</span></td>
+            <td><span class="lb-xp">4,520<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:90.4%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">5° E</span></td>
+            <td><span class="lb-badge elite">Defensor Élite</span></td>
+            <td><span class="lb-xp">4,350<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:87.0%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">5° F</span></td>
+            <td><span class="lb-badge guardian">Guardián Emérito</span></td>
+            <td><span class="lb-xp">4,180<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:83.6%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">5° G</span></td>
+            <td><span class="lb-badge guardian">Guardián Emérito</span></td>
+            <td><span class="lb-xp">4,010<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:80.2%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">5° H</span></td>
+            <td><span class="lb-badge ambassador">Embajador Activo</span></td>
+            <td><span class="lb-xp">3,840<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:76.8%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">5° I</span></td>
+            <td><span class="lb-badge ambassador">Embajador Activo</span></td>
+            <td><span class="lb-xp">3,670<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:73.4%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">5° J</span></td>
+            <td><span class="lb-badge explorer">Explorador</span></td>
+            <td><span class="lb-xp">3,490<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:69.8%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">5° K</span></td>
+            <td><span class="lb-badge explorer">Explorador</span></td>
+            <td><span class="lb-xp">3,310<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:66.2%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">5° L</span></td>
+            <td><span class="lb-badge explorer">Explorador</span></td>
+            <td><span class="lb-xp">3,130<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:62.6%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">5° M</span></td>
+            <td><span class="lb-badge agent">Agente</span></td>
+            <td><span class="lb-xp">2,950<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:59.0%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">5° N</span></td>
+            <td><span class="lb-badge agent">Agente</span></td>
+            <td><span class="lb-xp">2,770<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:55.4%"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="lb-sec">5° O</span></td>
+            <td><span class="lb-badge initiate">Iniciado</span></td>
+            <td><span class="lb-xp">2,590<span class="lb-xp-unit">XP</span></span><div class="lb-bar"><div class="lb-bar-fill" style="width:51.8%"></div></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </section>
+
+  <!-- ── SECCIÓN 6: SOPORTE Y EMERGENCIAS ── -->
+  <section class="section" id="emergencias">
+    <div class="section-eyebrow">Canales de Emergencia</div>
+    <div class="section-title">Soporte y Ayuda Real</div>
+    <div class="section-subtitle">Líneas oficiales · Disponibles fuera de la plataforma</div>
+    <hr class="section-rule">
+
+    <div class="card card-emergency">
+      <div class="emergency-header">
+        <div class="emergency-icon-box">🆘</div>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--text-1);">Canales de Ayuda Inmediata</div>
+          <div style="font-size:11px;color:var(--text-2);">Si estás en peligro, no esperes. Llama ahora.</div>
+        </div>
+      </div>
+      <p class="emergency-intro">
+        Si tú o alguien que conoces está en riesgo inmediato, estas líneas atienden de forma gratuita y confidencial. No necesitas dar tu nombre. Tu seguridad es la prioridad absoluta.
+      </p>
+
+      <div class="emergency-grid">
+        <a class="emergency-link" href="tel:1811" aria-label="Llamar a SíseVe 1811">
+          <span class="em-icon">📞</span>
+          <div>
+            <span class="em-number">1811</span>
+            <span class="em-label">Línea SíseVe · MINEDU</span>
+          </div>
+        </a>
+        <a class="emergency-link" href="https://www.siseve.pe" target="_blank" rel="noopener noreferrer" aria-label="Portal web SíseVe">
+          <span class="em-icon">🌐</span>
+          <div>
+            <span class="em-number">siseve.pe</span>
+            <span class="em-label">Portal web de reportes SíseVe</span>
+          </div>
+        </a>
+        <a class="emergency-link" href="tel:100" aria-label="Llamar a Línea 100">
+          <span class="em-icon">☎️</span>
+          <div>
+            <span class="em-number">100</span>
+            <span class="em-label">Línea 100 · Violencia familiar y sexual</span>
+          </div>
+        </a>
+        <a class="emergency-link" href="tel:105" aria-label="Llamar a la Policía Nacional">
+          <span class="em-icon">🚔</span>
+          <div>
+            <span class="em-number">105</span>
+            <span class="em-label">Policía Nacional del Perú · PNP</span>
+          </div>
+        </a>
+      </div>
+
+      <div class="toe-block">
+        <div class="toe-title">🏫 Oficina de Tutoría y Orientación Educativa (TOE)</div>
+        <div class="toe-desc">
+          Nuestros tutores y consejeros están disponibles todos los días hábiles. Acércate a la oficina de TOE, habla con tu tutor/a de aula o usa el Buzón de Alerta anónimo en la parte superior de esta plataforma. Toda consulta es confidencial y se maneja con respeto y sin represalias.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PIE DE PÁGINA ── -->
+  <footer class="site-footer">
+    <div class="footer-left">
+      I.E. San Luis Gonzaga de Ica · Plataforma de Convivencia v1.4.2 · Temporada 1
+    </div>
+    <div class="footer-right">
+      Sistema interno · No compartir externamente
+    </div>
+  </footer>
+
+</div><!-- /page-shell -->
+
+<!-- ════════════════════════════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════════════════════════════ -->
+<script>
+  /* ── MODAL ── */
+  const modal       = document.getElementById('reportModal');
+  const openBtn     = document.getElementById('openModalBtn');
+  const closeBtn    = document.getElementById('modalCloseBtn');
+  const submitBtn   = document.getElementById('submitReportBtn');
+  const banner      = document.getElementById('successBanner');
+  const ticketEl    = document.getElementById('ticketCode');
+
+  let bannerTimer = null;
+
+  function openModal() {
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    closeBtn.focus();
+  }
+
+  function closeModal() {
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  function generateTicket() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    const num = 1000 + Math.floor(Math.random() * 9000);
+    return '#GS-' + code + '-' + num;
+  }
+
+  function showSuccessBanner(ticket) {
+    ticketEl.textContent = ticket;
+    banner.classList.add('visible');
+    clearTimeout(bannerTimer);
+    bannerTimer = setTimeout(function() {
+      banner.classList.remove('visible');
+    }, 5000);
+  }
+
+  function resetForm() {
+    document.getElementById('incidentType').value     = '';
+    document.getElementById('incidentGrade').value    = '';
+    document.getElementById('incidentDesc').value     = '';
+    document.getElementById('incidentLocation').value = '';
+  }
+
+  openBtn.addEventListener('click', openModal);
+
+  closeBtn.addEventListener('click', closeModal);
+
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) closeModal();
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
+  });
+
+  submitBtn.addEventListener('click', function() {
+    var type = document.getElementById('incidentType').value;
+    var desc = document.getElementById('incidentDesc').value.trim();
+
+    if (!type) {
+      document.getElementById('incidentType').focus();
+      document.getElementById('incidentType').style.borderColor = 'var(--red-bright)';
+      setTimeout(function() {
+        document.getElementById('incidentType').style.borderColor = '';
+      }, 1800);
+      return;
+    }
+    if (desc.length < 10) {
+      document.getElementById('incidentDesc').focus();
+      document.getElementById('incidentDesc').style.borderColor = 'var(--red-bright)';
+      document.getElementById('incidentDesc').placeholder = 'Por favor describe el incidente (mínimo 10 caracteres)...';
+      setTimeout(function() {
+        document.getElementById('incidentDesc').style.borderColor = '';
+      }, 1800);
+      return;
+    }
+
+    var ticket = generateTicket();
+    closeModal();
+    resetForm();
+    showSuccessBanner(ticket);
+  });
+
+  /* ── TABS DE GRADO ── */
+  var currentGrade = null;
+
+  function switchGrade(grade) {
+    var placeholder = document.getElementById('lb-placeholder');
+    var allPanels   = document.querySelectorAll('.grade-panel');
+    var allTabs     = document.querySelectorAll('.tab-btn');
+
+    placeholder.style.display = 'none';
+
+    allPanels.forEach(function(p) { p.classList.remove('active'); });
+    allTabs.forEach(function(t) {
+      t.classList.remove('active');
+      t.setAttribute('aria-selected', 'false');
+    });
+
+    var targetPanel = document.getElementById('grade-panel-' + grade);
+    var targetTab   = document.querySelector('.tab-btn[data-grade="' + grade + '"]');
+
+    if (targetPanel) targetPanel.classList.add('active');
+    if (targetTab) {
+      targetTab.classList.add('active');
+      targetTab.setAttribute('aria-selected', 'true');
+    }
+
+    currentGrade = grade;
+  }
+</script>
+</body>
+</html>
